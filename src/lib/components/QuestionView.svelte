@@ -116,6 +116,31 @@
 		}
 		return `Selecione até ${multiAllowed} opções (${multi.length}/${multiAllowed})`;
 	});
+	let needsRequiredHint = $derived(required && !answered && !busy);
+	let mobileRequiredTooltipVisible = $state(false);
+	let mobileRequiredTooltipTimer: ReturnType<typeof setTimeout> | undefined;
+
+	$effect(() => {
+		if (!needsRequiredHint) {
+			mobileRequiredTooltipVisible = false;
+			clearTimeout(mobileRequiredTooltipTimer);
+		}
+		return () => clearTimeout(mobileRequiredTooltipTimer);
+	});
+
+	function showMobileRequiredTooltip() {
+		if (!needsRequiredHint) return;
+		mobileRequiredTooltipVisible = true;
+		clearTimeout(mobileRequiredTooltipTimer);
+		mobileRequiredTooltipTimer = setTimeout(() => {
+			mobileRequiredTooltipVisible = false;
+		}, 6000);
+	}
+
+	function handleContinuePointerDown(e: PointerEvent) {
+		if (!needsRequiredHint || e.pointerType !== 'touch') return;
+		showMobileRequiredTooltip();
+	}
 
 	function tryAdvance(value: AnswerValue | undefined) {
 		if (node.kind === 'question') {
@@ -278,25 +303,41 @@
 			<span></span>
 		{/if}
 
-		<button
-			type="button"
-			class="btn"
-			onclick={submit}
-			disabled={isAutoAdvance || !canContinue}
+		<span
+			class="continue-wrap"
+			role="group"
+			data-required-hint={needsRequiredHint ? '' : undefined}
+			onpointerdown={handleContinuePointerDown}
 		>
-			{#if busy}
-				<span class="spinner" aria-hidden="true"></span>
-				<span class="visually-hidden">A carregar…</span>
-			{:else}
-				Continuar
+			<button
+				type="button"
+				class="btn"
+				onclick={submit}
+				disabled={isAutoAdvance || !canContinue}
+				aria-describedby={needsRequiredHint ? 'required-continue-hint' : undefined}
+			>
+				{#if busy}
+					<span class="spinner" aria-hidden="true"></span>
+					<span class="visually-hidden">A carregar…</span>
+				{:else}
+					Continuar
+				{/if}
+			</button>
+			{#if needsRequiredHint}
+				<span
+					id="required-continue-hint"
+					class="required-tooltip"
+					class:visible={mobileRequiredTooltipVisible}
+					role="tooltip"
+				>
+					Esta pergunta é obrigatória.
+				</span>
 			{/if}
-		</button>
+		</span>
 	</div>
 
 	{#if validationError}
 		<p class="hint error">{validationError}</p>
-	{:else if required && !answered}
-		<p class="hint muted">Esta pergunta é obrigatória.</p>
 	{:else if node.kind === 'question' && node.type === 'multi' && multiLimit === 'exact' && multiAllowed && multi.length > 0 && multi.length !== multiAllowed}
 		<p class="hint muted">Selecione exatamente {multiAllowed} opções para continuar.</p>
 	{/if}
@@ -432,6 +473,45 @@
 		align-items: center;
 		gap: 1rem;
 		margin-top: 1rem;
+	}
+	.continue-wrap {
+		position: relative;
+		display: inline-flex;
+	}
+	.continue-wrap[data-required-hint] .btn:disabled {
+		pointer-events: none;
+	}
+	.required-tooltip {
+		position: absolute;
+		right: 0;
+		bottom: calc(100% + 0.5rem);
+		z-index: 20;
+		width: max-content;
+		max-width: min(18rem, 90vw);
+		padding: 0.45rem 0.65rem;
+		font-size: 0.85rem;
+		line-height: 1.35;
+		color: var(--text);
+		background: var(--surface);
+		border: 1px solid var(--border);
+		border-radius: var(--radius);
+		box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+		opacity: 0;
+		visibility: hidden;
+		pointer-events: none;
+		transition:
+			opacity 0.15s ease,
+			visibility 0.15s ease;
+	}
+	.required-tooltip.visible {
+		opacity: 1;
+		visibility: visible;
+	}
+	@media (hover: hover) and (pointer: fine) {
+		.continue-wrap[data-required-hint]:hover .required-tooltip {
+			opacity: 1;
+			visibility: visible;
+		}
 	}
 	.hint {
 		font-size: 0.85rem;
