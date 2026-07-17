@@ -81,7 +81,8 @@ npm ci
 npm run build
 ```
 
-3. Set environment variables (systemd, `.env`, or your process manager):
+3. Create a `.env` at the project root (same variables as local). `npm run start` loads it
+   automatically via Node's `--env-file`:
 
 | Variable | Required | Description |
 |----------|----------|-------------|
@@ -95,7 +96,7 @@ npm run build
 4. Apply migrations to the production database:
 
 ```sh
-DATABASE_URL="mysql://..." npm run db:migrate
+npm run db:migrate
 ```
 
 5. Run the app:
@@ -104,6 +105,8 @@ DATABASE_URL="mysql://..." npm run db:migrate
 npm run start
 ```
 
+`npm run start` runs `node --env-file=.env build`, so `PORT`, `DATABASE_URL`, and the other
+vars from `.env` are available without exporting them in the shell.
 Put a reverse proxy (nginx, Caddy, etc.) in front for TLS. Back up both the MySQL database
 and the upload directory.
 

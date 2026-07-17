@@ -13,7 +13,7 @@ runes) deployed on a bare-metal VPS with Node.js.
 - **SvelteKit + Svelte 5 (runes mode)**. The adapter is configured in `vite.config.ts`
   (`@sveltejs/adapter-node`) — there is **no `svelte.config.js`**.
 - **Node.js** runtime on a VPS. Configuration via environment variables (see `.env.example`):
-  `DATABASE_URL`, `ADMIN_PASSWORD`, `SESSION_SECRET`, optional `UPLOAD_DIR`.
+  `DATABASE_URL`, `ADMIN_PASSWORD`, `SESSION_SECRET`, optional `UPLOAD_DIR`, `PORT`, `HOST`.
 - **MySQL via `mysql2` + Drizzle ORM**. `drizzle-kit` handles migrations.
 - **Local filesystem** for uploaded question/cover images (`src/lib/server/storage.ts`).
 
@@ -22,7 +22,8 @@ runes) deployed on a bare-metal VPS with Node.js.
 - `npm run dev` — dev server (loads `.env` via `vite.config.ts`).
 - `npm run check` — `svelte-kit sync` + `svelte-check`. **Run after changes; keep it at 0 errors/0 warnings.**
 - `npm run build` — production build (adapter output in `build/`).
-- `npm run start` — run the production build (`node build`).
+- `npm run start` — run the production build (`node --env-file=.env build`); loads root `.env`
+  automatically (including `PORT` / `HOST`).
 - `npm run db:generate` / `db:migrate` / `db:push` / `db:studio` — Drizzle (reads `DATABASE_URL` from `.env`).
 - Local MySQL: `docker compose up -d`.
 
@@ -76,5 +77,6 @@ map of nodes; the flow engine walks it one node at a time.
   rejected server-side. Deleting all replies unlocks it.
 - `FlowRule[]` convention: conditional rules first, one unconditional default **last**. The
   builder normalizes to this; `validateSpec` must pass before publishing.
-- Never commit secrets; use `.env` locally and env vars on the VPS in production.
+- Never commit secrets; use `.env` locally and on the VPS (`npm run start` loads it via
+  `--env-file=.env`).
 - Do not edit generated files (`.svelte-kit/`) or the plan file in `.cursor/plans/`.
