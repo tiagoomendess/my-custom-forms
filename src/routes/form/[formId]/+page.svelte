@@ -238,4 +238,13 @@
 	.footer {
 		font-size: 0.8rem;
 	}
+
+	@media (max-width: 640px) {
+		.runner {
+			padding: 1rem 0.75rem;
+		}
+		.sheet {
+			padding: 1.25rem 1rem;
+		}
+	}
 </style>
