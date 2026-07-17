@@ -124,87 +124,99 @@
 	{/if}
 </svelte:head>
 
-<div class="theme-corner">
-	<ThemeToggle />
-</div>
-
 <div class="runner">
-	<div class="card sheet">
-		{#if data.closed}
-			<div class="done">
-				<h2>{data.formName}</h2>
-				<p class="muted">Este formulário já não aceita respostas.</p>
-			</div>
-		{:else if data.alreadySubmitted}
-			<div class="done">
-				<h2>{data.formName}</h2>
-				<p class="muted">Já respondeu a este formulário.</p>
-			</div>
-		{:else if finished}
-			<div class="done">
-				<div class="tick">✓</div>
-				<h2>Obrigado!</h2>
-				<p class="muted">A sua resposta foi registada.</p>
-				<div class="share">
-					<p class="share-label">Partilhar este formulário</p>
-					<div class="share-row">
-						<input class="input share-input" type="text" readonly value={shareUrl} />
-						<button type="button" class="btn secondary sm" onclick={copyShareLink}>
-							{linkCopied ? 'Copiado!' : 'Copiar'}
-						</button>
+	<!-- Invisible chrome: reserves toggle height so the card never sits under it. -->
+	<header class="topbar">
+		<ThemeToggle />
+	</header>
+
+	<div class="main">
+		<div class="card sheet">
+			{#if data.closed}
+				<div class="done">
+					<h2>{data.formName}</h2>
+					<p class="muted">Este formulário já não aceita respostas.</p>
+				</div>
+			{:else if data.alreadySubmitted}
+				<div class="done">
+					<h2>{data.formName}</h2>
+					<p class="muted">Já respondeu a este formulário.</p>
+				</div>
+			{:else if finished}
+				<div class="done">
+					<div class="tick">✓</div>
+					<h2>Obrigado!</h2>
+					<p class="muted">A sua resposta foi registada.</p>
+					<div class="share">
+						<p class="share-label">Partilhar este formulário</p>
+						<div class="share-row">
+							<input class="input share-input" type="text" readonly value={shareUrl} />
+							<button type="button" class="btn secondary sm" onclick={copyShareLink}>
+								{linkCopied ? 'Copiado!' : 'Copiar'}
+							</button>
+						</div>
 					</div>
 				</div>
-			</div>
-		{:else if !current}
-			<div class="done">
-				<h2>{data.formName}</h2>
-				<p class="muted">Este formulário ainda não tem perguntas.</p>
-			</div>
-		{:else}
-			{#if errorMsg}
-				<div class="alert error">{errorMsg}</div>
+			{:else if !current}
+				<div class="done">
+					<h2>{data.formName}</h2>
+					<p class="muted">Este formulário ainda não tem perguntas.</p>
+				</div>
+			{:else}
+				{#if errorMsg}
+					<div class="alert error">{errorMsg}</div>
+				{/if}
+				{#key current.id}
+					<QuestionView
+						node={current}
+						initialValue={values[current.id]}
+						canGoBack={index > 0}
+						{busy}
+						onnext={next}
+						onback={back}
+					/>
+				{/key}
 			{/if}
-			{#key current.id}
-				<QuestionView
-					node={current}
-					initialValue={values[current.id]}
-					canGoBack={index > 0}
-					{busy}
-					onnext={next}
-					onback={back}
-				/>
-			{/key}
-		{/if}
+		</div>
+		<p class="footer muted">{data.formName}</p>
 	</div>
-	<p class="footer muted">{data.formName}</p>
 </div>
 
 <style>
-	.theme-corner {
-		position: fixed;
-		top: 1rem;
-		right: 1rem;
-		z-index: 10;
-	}
 	.runner {
 		/* svh avoids iOS first-paint dvh mis-measure that can push content off-screen */
 		min-height: 100svh;
 		display: flex;
 		flex-direction: column;
-		align-items: center;
-		justify-content: flex-start;
-		padding: 1.5rem;
-		padding-top: max(1.5rem, 12vh);
-		gap: 1rem;
 	}
 
 	@media (min-width: 640px) {
 		.runner {
 			min-height: 100dvh;
-			justify-content: center;
-			padding-top: 1.5rem;
 		}
 	}
+
+	.topbar {
+		display: flex;
+		justify-content: flex-end;
+		align-items: center;
+		flex-shrink: 0;
+		min-height: 3.25rem;
+		padding: 0.75rem 1rem 0;
+		/* No background / border — layout only */
+	}
+
+	.main {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 1rem 1.5rem 1.5rem;
+		gap: 1rem;
+		min-height: 0;
+	}
+
 	.sheet {
 		width: 100%;
 		max-width: 560px;
@@ -250,8 +262,11 @@
 	}
 
 	@media (max-width: 640px) {
-		.runner {
-			padding: 1rem 0.75rem;
+		.topbar {
+			padding: 0.75rem 0.75rem 0;
+		}
+		.main {
+			padding: 0.75rem 0.75rem 1rem;
 		}
 		.sheet {
 			padding: 1.25rem 1rem;
