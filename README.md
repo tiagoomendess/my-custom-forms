@@ -92,6 +92,7 @@ npm run build
 | `UPLOAD_DIR` | no | Image storage path (default: `data/uploads`) |
 | `PORT` | no | HTTP port (default: `3000`) |
 | `HOST` | no | Bind address (default: `0.0.0.0`) |
+| `BODY_SIZE_LIMIT` | no | Max request body size (default adapter: `512K`; set to `5M` for image uploads) |
 
 4. Apply migrations to the production database:
 

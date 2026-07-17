@@ -13,7 +13,8 @@ runes) deployed on a bare-metal VPS with Node.js.
 - **SvelteKit + Svelte 5 (runes mode)**. The adapter is configured in `vite.config.ts`
   (`@sveltejs/adapter-node`) — there is **no `svelte.config.js`**.
 - **Node.js** runtime on a VPS. Configuration via environment variables (see `.env.example`):
-  `DATABASE_URL`, `ADMIN_PASSWORD`, `SESSION_SECRET`, optional `UPLOAD_DIR`, `PORT`, `HOST`.
+  `DATABASE_URL`, `ADMIN_PASSWORD`, `SESSION_SECRET`, optional `UPLOAD_DIR`, `PORT`, `HOST`,
+  `BODY_SIZE_LIMIT` (set to `5M` so image uploads are not rejected by adapter-node’s 512K default).
 - **MySQL via `mysql2` + Drizzle ORM**. `drizzle-kit` handles migrations.
 - **Local filesystem** for uploaded question/cover images (`src/lib/server/storage.ts`).
 
@@ -70,7 +71,8 @@ map of nodes; the flow engine walks it one node at a time.
 - Get the DB with `await getDb()` inside a request; it throws if `DATABASE_URL` is missing.
   A module-level connection pool is reused across requests.
 - Uploaded images live under `UPLOAD_DIR` (default `data/uploads/`). Back up this directory
-  alongside the database.
+  alongside the database. Production must set `BODY_SIZE_LIMIT=5M` (adapter-node defaults to
+  `512K` and will 413 before the upload handler’s own 5 MB check).
 - The flow engine is pure and must stay that way — keep DB/randomness injection at the call site
   (`advance(...)` accepts an optional `rng`).
 - A form's spec is **locked once it has submissions** (`hasSubmissions`); builder save/edit is
