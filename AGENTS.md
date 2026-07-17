@@ -15,6 +15,8 @@ runes) deployed on a bare-metal VPS with Node.js.
 - **Node.js** runtime on a VPS. Configuration via environment variables (see `.env.example`):
   `DATABASE_URL`, `ADMIN_PASSWORD`, `SESSION_SECRET`, optional `UPLOAD_DIR`, `PORT`, `HOST`,
   `BODY_SIZE_LIMIT` (set to `5M` so image uploads are not rejected by adapter-node’s 512K default).
+  Behind nginx/Cloudflare, set `ADDRESS_HEADER=cf-connecting-ip` so submission IPs and rate limits
+  use the visitor address (adapter-node env; not read via `env.ts`).
 - **MySQL via `mysql2` + Drizzle ORM**. `drizzle-kit` handles migrations.
 - **Local filesystem** for uploaded question/cover images (`src/lib/server/storage.ts`).
 
