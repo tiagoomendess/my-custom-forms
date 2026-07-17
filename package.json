@@ -1,0 +1,45 @@
+{
+	"name": "my-custom-forms",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"deploy": "npm run build && wrangler deploy",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "drizzle-kit migrate",
+		"db:push": "drizzle-kit push",
+		"db:studio": "drizzle-kit studio"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "^5.20260716.1",
+		"@sveltejs/adapter-auto": "^7.0.1",
+		"@sveltejs/kit": "^2.63.0",
+		"@sveltejs/vite-plugin-svelte": "^7.1.2",
+		"@tailwindcss/vite": "^4.3.3",
+		"@types/sanitize-html": "^2.16.1",
+		"dotenv": "^17.4.2",
+		"drizzle-kit": "^0.31.10",
+		"flowbite": "^4.0.2",
+		"flowbite-svelte": "^1.33.1",
+		"flowbite-svelte-icons": "^3.1.0",
+		"svelte": "^5.56.1",
+		"svelte-check": "^4.6.0",
+		"tailwindcss": "^4.3.3",
+		"typescript": "^6.0.3",
+		"vite": "^8.0.16",
+		"wrangler": "^4.111.0"
+	},
+	"dependencies": {
+		"@sveltejs/adapter-cloudflare": "^7.2.9",
+		"drizzle-orm": "^0.45.2",
+		"marked": "^18.0.6",
+		"mysql2": "^3.23.0",
+		"sanitize-html": "^2.17.6"
+	}
+}

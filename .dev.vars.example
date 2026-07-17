@@ -1,0 +1,6 @@
+# Local-dev secrets, read by wrangler / the SvelteKit platform proxy.
+# Copy to `.dev.vars` and fill in. In production set these with:
+#   wrangler secret put ADMIN_PASSWORD
+#   wrangler secret put SESSION_SECRET
+ADMIN_PASSWORD="change-me"
+SESSION_SECRET="a-long-random-string-used-to-sign-cookies"

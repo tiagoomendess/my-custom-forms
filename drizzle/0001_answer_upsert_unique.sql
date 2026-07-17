@@ -1,0 +1,1 @@
+ALTER TABLE `answers` ADD CONSTRAINT `answers_submission_question_uq` UNIQUE(`submission_id`,`question_id`);

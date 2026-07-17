@@ -1,0 +1,316 @@
+@import 'tailwindcss';
+@plugin 'flowbite/plugin';
+@custom-variant dark (&:where(.dark, .dark *));
+
+@source "../node_modules/flowbite-svelte/dist";
+@source "../node_modules/flowbite-svelte-icons/dist";
+
+:root {
+	color-scheme: light;
+	--bg: #f6f7f9;
+	--surface: #ffffff;
+	--surface-2: #f1f3f5;
+	--border: #e3e6ea;
+	--text: #1a1d21;
+	--text-muted: #6b7280;
+	--primary: #4f46e5;
+	--primary-hover: #4338ca;
+	--primary-contrast: #ffffff;
+	--primary-soft: #eef2ff;
+	--danger: #dc2626;
+	--danger-hover: #b91c1c;
+	--danger-soft: #fef2f2;
+	--success: #059669;
+	--success-soft: #dcfce7;
+	--radius: 10px;
+	--radius-sm: 7px;
+	--shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.1);
+	--shadow-lg: 0 10px 25px rgba(16, 24, 40, 0.08), 0 4px 10px rgba(16, 24, 40, 0.05);
+	--font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
+		sans-serif;
+	/* Flowbite forms plugin (checkboxes/radios) reads these tokens. */
+	--color-brand: var(--primary);
+	--color-default: var(--border);
+	--color-white: #ffffff;
+}
+
+:root.dark {
+	color-scheme: dark;
+	--bg: #0e1116;
+	--surface: #171a21;
+	--surface-2: #21252e;
+	--border: #2b303b;
+	--text: #e6e8ee;
+	--text-muted: #9aa2b1;
+	--primary: #6366f1;
+	--primary-hover: #818cf8;
+	--primary-contrast: #ffffff;
+	--primary-soft: rgba(99, 102, 241, 0.18);
+	--danger: #ef4444;
+	--danger-hover: #f87171;
+	--danger-soft: rgba(239, 68, 68, 0.16);
+	--success: #10b981;
+	--success-soft: rgba(16, 185, 129, 0.18);
+	--shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.5);
+	--shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5), 0 4px 10px rgba(0, 0, 0, 0.4);
+	--color-brand: var(--primary);
+	--color-default: var(--border);
+	--color-white: var(--surface);
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	font-family: var(--font);
+	background: var(--bg);
+	color: var(--text);
+	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+	margin: 0 0 0.5em;
+	line-height: 1.25;
+	font-weight: 650;
+}
+
+a {
+	color: var(--primary);
+	text-decoration: none;
+}
+a:hover {
+	text-decoration: underline;
+}
+
+button,
+input,
+select,
+textarea {
+	font-family: inherit;
+	font-size: 1rem;
+	color: inherit;
+}
+
+/* Buttons */
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 0.6rem 1.1rem;
+	border-radius: var(--radius-sm);
+	border: 1px solid transparent;
+	background: var(--primary);
+	color: var(--primary-contrast);
+	font-weight: 550;
+	cursor: pointer;
+	transition:
+		background 0.15s ease,
+		border-color 0.15s ease,
+		opacity 0.15s ease;
+	text-decoration: none;
+}
+.btn:hover {
+	background: var(--primary-hover);
+	text-decoration: none;
+}
+.btn:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+.btn.secondary {
+	background: var(--surface);
+	color: var(--text);
+	border-color: var(--border);
+}
+.btn.secondary:hover {
+	background: var(--surface-2);
+}
+.btn.danger {
+	background: var(--danger);
+}
+.btn.danger:hover {
+	background: var(--danger-hover);
+}
+.btn.ghost {
+	background: transparent;
+	color: var(--text-muted);
+}
+.btn.ghost:hover {
+	background: var(--surface-2);
+}
+.btn.sm {
+	padding: 0.35rem 0.7rem;
+	font-size: 0.85rem;
+}
+
+/* Form controls */
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	margin-bottom: 1rem;
+}
+.field label {
+	font-weight: 550;
+	font-size: 0.9rem;
+}
+.input,
+.select,
+.textarea {
+	width: 100%;
+	padding: 0.6rem 0.75rem;
+	border: 1px solid var(--border);
+	border-radius: var(--radius-sm);
+	background: var(--surface);
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.input:focus,
+.select:focus,
+.textarea:focus {
+	outline: none;
+	border-color: var(--primary);
+	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+.textarea {
+	resize: vertical;
+	min-height: 4rem;
+}
+
+/* Cards + surfaces */
+.card {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow);
+}
+
+.badge {
+	display: inline-block;
+	padding: 0.15rem 0.55rem;
+	border-radius: 999px;
+	font-size: 0.75rem;
+	font-weight: 600;
+	background: var(--surface-2);
+	color: var(--text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+}
+.badge.green {
+	background: #dcfce7;
+	color: #15803d;
+}
+.badge.amber {
+	background: #fef3c7;
+	color: #b45309;
+}
+.badge.gray {
+	background: var(--surface-2);
+	color: var(--text-muted);
+}
+:root.dark .badge.green {
+	background: rgba(16, 185, 129, 0.18);
+	color: #6ee7b7;
+}
+:root.dark .badge.amber {
+	background: rgba(245, 158, 11, 0.18);
+	color: #fcd34d;
+}
+
+.alert {
+	padding: 0.75rem 1rem;
+	border-radius: var(--radius-sm);
+	margin-bottom: 1rem;
+	font-size: 0.9rem;
+}
+.alert.error {
+	background: #fef2f2;
+	color: var(--danger-hover);
+	border: 1px solid #fecaca;
+}
+.alert.info {
+	background: #eff6ff;
+	color: #1d4ed8;
+	border: 1px solid #bfdbfe;
+}
+:root.dark .alert.error {
+	background: rgba(239, 68, 68, 0.12);
+	color: #fca5a5;
+	border-color: rgba(239, 68, 68, 0.35);
+}
+:root.dark .alert.info {
+	background: rgba(59, 130, 246, 0.12);
+	color: #93c5fd;
+	border-color: rgba(59, 130, 246, 0.35);
+}
+
+.muted {
+	color: var(--text-muted);
+}
+
+/* Rendered markdown (form descriptions) */
+.markdown {
+	color: var(--text-muted);
+	font-size: 0.95rem;
+	line-height: 1.55;
+}
+.markdown :is(p, ul, ol, blockquote, pre) {
+	margin: 0 0 0.65em;
+}
+.markdown :is(p, ul, ol, blockquote, pre):last-child {
+	margin-bottom: 0;
+}
+.markdown :is(h1, h2, h3, h4, h5, h6) {
+	margin: 0 0 0.45em;
+	font-size: 1em;
+	font-weight: 650;
+	color: var(--text);
+}
+.markdown ul,
+.markdown ol {
+	padding-left: 1.35rem;
+}
+.markdown li + li {
+	margin-top: 0.2em;
+}
+.markdown code {
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+	font-size: 0.88em;
+	background: var(--surface-2);
+	padding: 0.12em 0.35em;
+	border-radius: 4px;
+}
+.markdown pre {
+	padding: 0.75rem;
+	border-radius: var(--radius-sm);
+	background: var(--surface-2);
+	overflow-x: auto;
+}
+.markdown pre code {
+	background: none;
+	padding: 0;
+}
+.markdown blockquote {
+	padding-left: 0.85rem;
+	border-left: 3px solid var(--border);
+	color: var(--text-muted);
+}
+.markdown hr {
+	border: none;
+	border-top: 1px solid var(--border);
+	margin: 0.75em 0;
+}
+.markdown a {
+	color: var(--primary);
+}
