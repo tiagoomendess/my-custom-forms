@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { Alert, Button } from 'flowbite-svelte';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 </script>
 
@@ -14,17 +13,7 @@
 <div class="landing">
 	<div class="card box">
 		<h1>Custom Forms</h1>
-		<p class="muted">
-			Build dynamic, branching research forms and collect responses. Manage everything from the
-			admin area.
-		</p>
-
-		<Alert class="my-4 text-left">
-			<span class="font-medium">Flowbite Svelte is ready.</span> You can now build the UI with this
-			component library.
-		</Alert>
-
-		<Button href="/admin">Go to admin</Button>
+		<p class="muted">You're not supposed to be here, shoo leave!</p>
 	</div>
 </div>
 
