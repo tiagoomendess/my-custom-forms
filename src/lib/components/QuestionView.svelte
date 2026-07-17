@@ -8,6 +8,10 @@
 	import type { AnswerValue, PublicNode } from '$lib/forms/types';
 	import MarkdownContent from './MarkdownContent.svelte';
 
+	/** Suppress synthetic clicks after touch handling (survives QuestionView remounts). */
+	const GHOST_CLICK_MS = 450;
+	let ghostClickSuppressUntil = 0;
+
 	let {
 		node,
 		initialValue = undefined,
@@ -74,23 +78,28 @@
 	});
 
 	function markTouchHandled(e: PointerEvent) {
+		ghostClickSuppressUntil = Date.now() + GHOST_CLICK_MS;
 		suppressClick = true;
 		clearTimeout(suppressClickTimer);
 		suppressClickTimer = setTimeout(() => {
 			suppressClick = false;
-		}, 400);
+		}, GHOST_CLICK_MS);
 		e.preventDefault();
 	}
 
+	function shouldIgnoreClick(): boolean {
+		return suppressClick || Date.now() < ghostClickSuppressUntil;
+	}
+
 	function handleOptionPointerUp(action: () => void, e: PointerEvent) {
-		if (busy) return;
+		if (busy || shouldIgnoreClick()) return;
 		if (e.pointerType !== 'touch') return;
 		markTouchHandled(e);
 		action();
 	}
 
 	function handleOptionClick(action: () => void) {
-		if (busy || suppressClick) return;
+		if (busy || shouldIgnoreClick()) return;
 		action();
 	}
 
@@ -182,7 +191,20 @@
 
 	function handleContinuePointerDown(e: PointerEvent) {
 		if (!needsRequiredHint || e.pointerType !== 'touch') return;
+		markTouchHandled(e);
 		showMobileRequiredTooltip();
+	}
+
+	function handleContinuePointerUp(e: PointerEvent) {
+		if (e.pointerType !== 'touch') return;
+		if (busy || isAutoAdvance || !canContinue) return;
+		markTouchHandled(e);
+		submit();
+	}
+
+	function handleContinueClick() {
+		if (busy || shouldIgnoreClick()) return;
+		submit();
 	}
 
 	function tryAdvance(value: AnswerValue | undefined) {
@@ -360,7 +382,8 @@
 				class="btn continue-btn"
 				class:loading={busy}
 				style={`--continue-progress-ms: ${CONTINUE_PROGRESS_MS}ms`}
-				onclick={submit}
+				onpointerup={handleContinuePointerUp}
+				onclick={handleContinueClick}
 				disabled={isAutoAdvance || !canContinue}
 				aria-describedby={needsRequiredHint ? 'required-continue-hint' : undefined}
 				aria-busy={busy}
