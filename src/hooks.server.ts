@@ -1,8 +1,15 @@
 import { redirect, type Handle } from '@sveltejs/kit';
 import { SESSION_COOKIE, verifySessionToken } from '$lib/server/auth';
+import { getSessionSecret } from '$lib/server/env';
 
 export const handle: Handle = async ({ event, resolve }) => {
-	const secret = event.platform?.env?.SESSION_SECRET ?? '';
+	let secret = '';
+	try {
+		secret = getSessionSecret();
+	} catch {
+		// Misconfigured server — treat everyone as signed out.
+	}
+
 	const token = event.cookies.get(SESSION_COOKIE);
 	event.locals.isAdmin = secret ? await verifySessionToken(token, secret) : false;
 
@@ -15,7 +22,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 		throw redirect(303, `/admin/login?redirectTo=${redirectTo}`);
 	}
 
-	// Already signed in? Skip the login page.
 	if (isLoginPage && event.locals.isAdmin) {
 		throw redirect(303, '/admin');
 	}

@@ -3,8 +3,8 @@
 A small, self-hosted alternative to Google Forms for research: build dynamic, branching
 forms with conditional flows and A/B splits, collect responses, and export them to CSV.
 
-Built with SvelteKit (Svelte 5) and designed to run on Cloudflare Workers with MySQL
-(via Hyperdrive) and R2 for image storage.
+Built with SvelteKit (Svelte 5) and designed to run on a bare-metal VPS with Node.js,
+MySQL, and local filesystem storage for images.
 
 ## Features
 
@@ -13,7 +13,7 @@ Built with SvelteKit (Svelte 5) and designed to run on Cloudflare Workers with M
 - Auto-advance for single-choice questions, with a Back button always available.
 - Section breaks (informational screens with just Continue / Back).
 - A/B testing via weighted split nodes; each respondent's branch is recorded.
-- Images on any question or break (stored in R2).
+- Images on any question or break (stored on the local filesystem).
 - Partial saves: a submission is created on the first answered question (status `PARTIAL`)
   and marked `FINISHED` when the flow reaches the end.
 - Metadata captured per submission: IP, user agent, and a `?source=` tag from the share link.
@@ -23,10 +23,10 @@ Built with SvelteKit (Svelte 5) and designed to run on Cloudflare Workers with M
 
 ## Tech stack
 
-- SvelteKit + `@sveltejs/adapter-cloudflare`
-- MySQL through Cloudflare Hyperdrive, using `mysql2` + Drizzle ORM
-- Cloudflare R2 (native binding) for images
-- Workers Rate Limiting binding for login throttling
+- SvelteKit + `@sveltejs/adapter-node`
+- MySQL using `mysql2` + Drizzle ORM
+- Local filesystem for images (`data/uploads/` by default)
+- In-memory rate limiting for admin login
 
 ## Local development
 
@@ -36,17 +36,16 @@ Built with SvelteKit (Svelte 5) and designed to run on Cloudflare Workers with M
 npm install
 ```
 
-2. Start a local MySQL (matches `.env.example` / `wrangler.jsonc`):
+2. Start a local MySQL (matches `.env.example`):
 
 ```sh
 docker compose up -d
 ```
 
-3. Create your env files:
+3. Create your env file:
 
 ```sh
-cp .env.example .env          # used by drizzle-kit (migrations/studio)
-cp .dev.vars.example .dev.vars # ADMIN_PASSWORD + SESSION_SECRET for local dev
+cp .env.example .env
 ```
 
 4. Run migrations against the local database:
@@ -55,9 +54,7 @@ cp .dev.vars.example .dev.vars # ADMIN_PASSWORD + SESSION_SECRET for local dev
 npm run db:migrate
 ```
 
-5. Start the dev server. Cloudflare bindings are emulated by the SvelteKit platform proxy;
-   the local MySQL connection comes from `.env` `DATABASE_URL` (wired to the Hyperdrive
-   binding in `vite.config.ts`), so no DB credentials live in `wrangler.jsonc`:
+5. Start the dev server:
 
 ```sh
 npm run dev
@@ -73,48 +70,47 @@ public link at `/form/<id>`.
 - `npm run db:push` – push the schema directly (handy in early development)
 - `npm run db:studio` – open Drizzle Studio
 
-## Deploying to Cloudflare
+## Deploying to a VPS
 
-1. Create the backing resources (once):
+1. Install Node.js (20+) and MySQL on the server.
 
-```sh
-# MySQL connection pooling + edge caching
-wrangler hyperdrive create my-custom-forms-db \
-  --connection-string="mysql://USER:PASS@HOST:3306/DBNAME"
-
-# Object storage for images
-wrangler r2 bucket create my-custom-forms-images
-```
-
-2. Put the returned Hyperdrive id into `wrangler.jsonc` (`hyperdrive[0].id`).
-
-3. Set secrets:
+2. Clone the repo, install dependencies, and build:
 
 ```sh
-wrangler secret put ADMIN_PASSWORD
-wrangler secret put SESSION_SECRET
+npm ci
+npm run build
 ```
 
-4. Apply migrations to your production MySQL (run `db:migrate` with `DATABASE_URL` pointed at
-   the production database, e.g. through a tunnel or from a trusted host).
+3. Set environment variables (systemd, `.env`, or your process manager):
 
-5. Build and deploy:
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATABASE_URL` | yes | MySQL connection string |
+| `ADMIN_PASSWORD` | yes | Admin login password |
+| `SESSION_SECRET` | yes | Random string for signing cookies |
+| `UPLOAD_DIR` | no | Image storage path (default: `data/uploads`) |
+| `PORT` | no | HTTP port (default: `3000`) |
+| `HOST` | no | Bind address (default: `0.0.0.0`) |
+
+4. Apply migrations to the production database:
 
 ```sh
-npm run deploy
+DATABASE_URL="mysql://..." npm run db:migrate
 ```
 
-Notes:
+5. Run the app:
 
-- The Rate Limiting binding (`LOGIN_LIMITER`) is defined in `wrangler.jsonc` and requires no
-  extra provisioning.
-- `mysql2` requires `nodejs_compat` and a compatibility date of 2024-09-23 or later (already
-  set in `wrangler.jsonc`).
+```sh
+npm run start
+```
+
+Put a reverse proxy (nginx, Caddy, etc.) in front for TLS. Back up both the MySQL database
+and the upload directory.
 
 ## Project layout
 
 - `src/lib/forms/` – shared form spec types, the flow engine, and builder helpers
-- `src/lib/server/` – DB connection, schema, auth, rate limiting, and reply helpers
+- `src/lib/server/` – DB connection, local storage, auth, rate limiting, and reply helpers
 - `src/lib/components/` – the shared runner UI (`QuestionView`) and builder components
 - `src/routes/form/[formId]/` – the public form runner and its answer API
 - `src/routes/admin/` – login and the form builder / replies admin area

@@ -6,6 +6,7 @@ import {
 	hasFormDoneCookie,
 	isPastSubmitDeadline
 } from '$lib/server/forms';
+import { getSessionSecret } from '$lib/server/env';
 import { startNode } from '$lib/forms/engine';
 import { toPublicNode } from '$lib/forms/types';
 import type { PageServerLoad } from './$types';
@@ -13,12 +14,11 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({
 	params,
 	url,
-	platform,
 	cookies,
 	request,
 	getClientAddress
 }) => {
-	const db = await getDb(platform);
+	const db = await getDb();
 	const form = await getForm(db, params.formId);
 
 	if (!form || form.status !== 'published') {
@@ -46,7 +46,12 @@ export const load: PageServerLoad = async ({
 	}
 
 	if (!form.allowMultipleSubmits) {
-		const secret = platform?.env?.SESSION_SECRET ?? '';
+		let secret = '';
+		try {
+			secret = getSessionSecret();
+		} catch {
+			// Misconfigured server — skip cookie check.
+		}
 		const doneCookie = await hasFormDoneCookie(cookies, form.id, secret);
 		const userAgent = request.headers.get('user-agent')?.slice(0, 512) ?? null;
 		const doneClient = await hasFinishedByClient(

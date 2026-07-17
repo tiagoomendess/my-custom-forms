@@ -1,23 +1,16 @@
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { getImage } from '$lib/server/storage';
 
-export const GET: RequestHandler = async ({ params, platform }) => {
-	const bucket = platform?.env?.IMAGES;
-	if (!bucket) throw error(500, 'Image storage is not configured.');
-
-	const object = await bucket.get(params.key);
-	if (!object) throw error(404, 'Image not found.');
+export const GET: RequestHandler = async ({ params }) => {
+	const key = params.key;
+	const image = await getImage(key);
+	if (!image) throw error(404, 'Image not found.');
 
 	const headers = new Headers();
-	const meta = object.httpMetadata;
-	if (meta?.contentType) headers.set('content-type', meta.contentType);
-	if (meta?.contentDisposition) headers.set('content-disposition', meta.contentDisposition);
-	if (meta?.contentLanguage) headers.set('content-language', meta.contentLanguage);
-	if (meta?.cacheControl) headers.set('cache-control', meta.cacheControl);
-	headers.set('etag', object.httpEtag);
-	if (!headers.has('cache-control')) {
-		headers.set('cache-control', 'public, max-age=31536000, immutable');
-	}
+	headers.set('content-type', image.contentType);
+	headers.set('etag', image.etag);
+	headers.set('cache-control', 'public, max-age=31536000, immutable');
 
-	return new Response(object.body, { headers });
+	return new Response(new Uint8Array(image.body), { headers });
 };

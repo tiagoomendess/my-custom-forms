@@ -1,5 +1,6 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { putImage } from '$lib/server/storage';
 
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
@@ -10,10 +11,7 @@ const EXT: Record<string, string> = {
 	'image/gif': 'gif'
 };
 
-export const POST: RequestHandler = async ({ params, request, platform }) => {
-	const bucket = platform?.env?.IMAGES;
-	if (!bucket) throw error(500, 'Image storage is not configured.');
-
+export const POST: RequestHandler = async ({ params, request }) => {
 	const form = await request.formData();
 	const file = form.get('file');
 	if (!(file instanceof File)) throw error(400, 'No file provided.');
@@ -21,9 +19,7 @@ export const POST: RequestHandler = async ({ params, request, platform }) => {
 	if (!ALLOWED.has(file.type)) throw error(415, 'Unsupported image type.');
 
 	const key = `${params.id}/${crypto.randomUUID()}.${EXT[file.type]}`;
-	await bucket.put(key, await file.arrayBuffer(), {
-		httpMetadata: { contentType: file.type }
-	});
+	await putImage(key, await file.arrayBuffer(), file.type);
 
 	return json({ key });
 };

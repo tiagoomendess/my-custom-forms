@@ -31,9 +31,8 @@ My plan with this repo is to build a custom and dynamic forms application. I wan
 # Tech stack
 
 - Sveltekit for the framework
-- Mysql for DB, 
-- AWS s3 for file storage
-- Make everything compatible with Cloudflare Workers/Pages, might deploy there but not sure yet.
-  - Cloudflare R2 uses same API as S3
+- Mysql for DB
+- Local filesystem for file storage (images stored under `data/uploads/` on the VPS)
+- Deployed on a bare-metal VPS with `@sveltejs/adapter-node`
 
 

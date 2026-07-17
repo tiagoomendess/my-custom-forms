@@ -16,7 +16,7 @@ export const forms = mysqlTable('forms', {
 	name: varchar('name', { length: 255 }).notNull(),
 	spec: json('spec').$type<FormSpec>().notNull(),
 	status: mysqlEnum('status', ['draft', 'published', 'archived']).notNull().default('draft'),
-	/** R2 object key for social/OG cover image. */
+	/** Local storage key for social/OG cover image. */
 	coverImageKey: varchar('cover_image_key', { length: 512 }),
 	/** After this instant, the public form rejects new submissions. Null = no deadline. */
 	allowSubmitUntil: timestamp('allow_submit_until'),

@@ -6,8 +6,8 @@ import { getForm } from '$lib/server/forms';
 import { formatAnswer, getAnswerMap, getSubmissions, listQuestions } from '$lib/server/replies';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ params, platform }) => {
-	const db = await getDb(platform);
+export const load: PageServerLoad = async ({ params }) => {
+	const db = await getDb();
 	const form = await getForm(db, params.id);
 	if (!form) throw error(404, 'Form not found.');
 
@@ -37,8 +37,8 @@ export const load: PageServerLoad = async ({ params, platform }) => {
 };
 
 export const actions: Actions = {
-	deleteAll: async ({ params, platform }) => {
-		const db = await getDb(platform);
+	deleteAll: async ({ params }) => {
+		const db = await getDb();
 		const form = await getForm(db, params.id);
 		if (!form) throw error(404, 'Form not found.');
 

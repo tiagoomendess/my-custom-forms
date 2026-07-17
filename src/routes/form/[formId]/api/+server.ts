@@ -18,6 +18,7 @@ import {
 } from '$lib/forms/engine';
 import { toPublicNode, type AnswerValue } from '$lib/forms/types';
 import { answers, submissions } from '$lib/server/db/schema';
+import { getSessionSecret } from '$lib/server/env';
 
 type Body = {
 	submissionId?: string | null;
@@ -37,18 +38,22 @@ function isAnswered(value: AnswerValue | null | undefined): value is AnswerValue
 export const POST: RequestHandler = async ({
 	params,
 	request,
-	platform,
 	getClientAddress,
 	cookies
 }) => {
-	const db = await getDb(platform);
+	const db = await getDb();
 	const form = await getForm(db, params.formId);
 	if (!form || form.status !== 'published') throw error(404, 'Formulário não disponível.');
 	if (isPastSubmitDeadline(form)) {
 		throw error(403, 'Este formulário já não aceita respostas.');
 	}
 
-	const secret = platform?.env?.SESSION_SECRET ?? '';
+	let secret = '';
+	try {
+		secret = getSessionSecret();
+	} catch {
+		// Misconfigured server — skip cookie check.
+	}
 	const clientIp = getClientAddress();
 	const userAgent = request.headers.get('user-agent')?.slice(0, 512) ?? null;
 

@@ -7,8 +7,8 @@ import { validateSpec } from '$lib/forms/engine';
 import type { FormSpec } from '$lib/forms/types';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ params, platform, url }) => {
-	const db = await getDb(platform);
+export const load: PageServerLoad = async ({ params, url }) => {
+	const db = await getDb();
 	const form = await getForm(db, params.id);
 	if (!form) throw error(404, 'Form not found.');
 
@@ -61,8 +61,8 @@ function parseSettings(data: FormData): { ok: true; settings: Settings } | { ok:
 }
 
 export const actions: Actions = {
-	save: async ({ params, request, platform }) => {
-		const db = await getDb(platform);
+	save: async ({ params, request }) => {
+		const db = await getDb();
 		const form = await getForm(db, params.id);
 		if (!form) throw error(404, 'Form not found.');
 
@@ -106,8 +106,8 @@ export const actions: Actions = {
 		return { ok: true, savedAt: Date.now() };
 	},
 
-	publish: async ({ params, request, platform }) => {
-		const db = await getDb(platform);
+	publish: async ({ params, request }) => {
+		const db = await getDb();
 		const form = await getForm(db, params.id);
 		if (!form) throw error(404, 'Form not found.');
 
@@ -153,8 +153,8 @@ export const actions: Actions = {
 		return { ok: true, published: true };
 	},
 
-	unpublish: async ({ params, platform }) => {
-		const db = await getDb(platform);
+	unpublish: async ({ params }) => {
+		const db = await getDb();
 		const form = await getForm(db, params.id);
 		if (!form) throw error(404, 'Form not found.');
 		await db.update(forms).set({ status: 'draft' }).where(eq(forms.id, form.id));

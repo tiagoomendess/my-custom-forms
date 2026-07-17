@@ -5,6 +5,7 @@ import {
 	safeEqual,
 	sessionCookieOptions
 } from '$lib/server/auth';
+import { getAdminPassword, getSessionSecret } from '$lib/server/env';
 import { checkRateLimit } from '$lib/server/ratelimit';
 import type { PageServerLoad } from './$types';
 
@@ -14,14 +15,13 @@ export const load: PageServerLoad = ({ url }) => {
 
 function safeRedirectTarget(raw: FormDataEntryValue | null): string {
 	const value = typeof raw === 'string' ? raw : '';
-	// Only allow internal, absolute paths to prevent open redirects.
 	return value.startsWith('/') && !value.startsWith('//') ? value : '/admin';
 }
 
 export const actions: Actions = {
-	default: async ({ request, cookies, platform, getClientAddress }) => {
+	default: async ({ request, cookies, getClientAddress }) => {
 		const ip = getClientAddress();
-		const allowed = await checkRateLimit(platform, `login:${ip}`);
+		const allowed = await checkRateLimit(`login:${ip}`);
 		if (!allowed) {
 			return fail(429, { error: 'Too many attempts. Please wait a minute and try again.' });
 		}
@@ -30,8 +30,10 @@ export const actions: Actions = {
 		const password = String(data.get('password') ?? '');
 		const redirectTo = safeRedirectTarget(data.get('redirectTo'));
 
-		const expected = platform?.env?.ADMIN_PASSWORD ?? '';
-		if (!expected) {
+		let expected = '';
+		try {
+			expected = getAdminPassword();
+		} catch {
 			return fail(500, { error: 'Admin password is not configured on the server.' });
 		}
 
@@ -39,7 +41,7 @@ export const actions: Actions = {
 			return fail(401, { error: 'Incorrect password.' });
 		}
 
-		const token = await createSessionToken(platform!.env.SESSION_SECRET);
+		const token = await createSessionToken(getSessionSecret());
 		cookies.set(SESSION_COOKIE, token, sessionCookieOptions);
 		throw redirect(303, redirectTo);
 	}

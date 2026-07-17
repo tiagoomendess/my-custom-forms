@@ -14,8 +14,8 @@ function toIso(d: Date | null): string {
 	return d ? new Date(d).toISOString() : '';
 }
 
-export const GET: RequestHandler = async ({ params, platform }) => {
-	const db = await getDb(platform);
+export const GET: RequestHandler = async ({ params }) => {
+	const db = await getDb();
 	const form = await getForm(db, params.id);
 	if (!form) throw error(404, 'Form not found.');
 

@@ -6,8 +6,8 @@ import { getForm } from '$lib/server/forms';
 import { emptySpec } from '$lib/forms/types';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ platform }) => {
-	const db = await getDb(platform);
+export const load: PageServerLoad = async () => {
+	const db = await getDb();
 	const rows = await db
 		.select({
 			id: forms.id,
@@ -23,15 +23,15 @@ export const load: PageServerLoad = async ({ platform }) => {
 };
 
 export const actions: Actions = {
-	create: async ({ platform }) => {
-		const db = await getDb(platform);
+	create: async () => {
+		const db = await getDb();
 		const id = crypto.randomUUID();
 		await db.insert(forms).values({ id, name: 'Untitled form', spec: emptySpec(), status: 'draft' });
 		throw redirect(303, `/admin/forms/${id}`);
 	},
 
-	duplicate: async ({ request, platform }) => {
-		const db = await getDb(platform);
+	duplicate: async ({ request }) => {
+		const db = await getDb();
 		const data = await request.formData();
 		const sourceId = String(data.get('id') ?? '');
 		const source = await getForm(db, sourceId);
@@ -49,16 +49,16 @@ export const actions: Actions = {
 		throw redirect(303, `/admin/forms/${id}`);
 	},
 
-	archive: async ({ request, platform }) => {
-		const db = await getDb(platform);
+	archive: async ({ request }) => {
+		const db = await getDb();
 		const data = await request.formData();
 		const id = String(data.get('id') ?? '');
 		await db.update(forms).set({ status: 'archived' }).where(eq(forms.id, id));
 		return { ok: true };
 	},
 
-	restore: async ({ request, platform }) => {
-		const db = await getDb(platform);
+	restore: async ({ request }) => {
+		const db = await getDb();
 		const data = await request.formData();
 		const id = String(data.get('id') ?? '');
 		await db.update(forms).set({ status: 'draft' }).where(eq(forms.id, id));

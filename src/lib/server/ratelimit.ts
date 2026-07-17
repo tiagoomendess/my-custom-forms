@@ -1,14 +1,21 @@
-/**
- * Thin wrapper around the Workers Rate Limiting binding. Fails open when the
- * binding is missing (e.g. some local-dev setups) so development is not blocked,
- * but is always enforced in production where the binding exists.
- */
-export async function checkRateLimit(
-	platform: App.Platform | undefined,
-	key: string
-): Promise<boolean> {
-	const limiter = platform?.env?.LOGIN_LIMITER;
-	if (!limiter) return true;
-	const { success } = await limiter.limit({ key });
-	return success;
+/** In-memory login rate limiter (5 attempts per 60 seconds per key). */
+const WINDOW_MS = 60_000;
+const LIMIT = 5;
+
+type Bucket = { count: number; resetAt: number };
+
+const buckets = new Map<string, Bucket>();
+
+export async function checkRateLimit(key: string): Promise<boolean> {
+	const now = Date.now();
+	const bucket = buckets.get(key);
+
+	if (!bucket || now >= bucket.resetAt) {
+		buckets.set(key, { count: 1, resetAt: now + WINDOW_MS });
+		return true;
+	}
+
+	if (bucket.count >= LIMIT) return false;
+	bucket.count++;
+	return true;
 }
