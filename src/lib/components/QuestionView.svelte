@@ -36,22 +36,63 @@
 	let validationError = $state<string | null>(null);
 
 	let lastNodeId = $state<string | null>(null);
+	let suppressClick = $state(false);
+	let suppressClickTimer: ReturnType<typeof setTimeout> | undefined;
+
+	$effect(() => {
+		return () => clearTimeout(suppressClickTimer);
+	});
+
 	$effect(() => {
 		if (node.id === lastNodeId) return;
 		lastNodeId = node.id;
 		validationError = null;
-		text = typeof initialValue === 'string' ? initialValue : '';
-		num = typeof initialValue === 'number' && node.kind === 'question' && node.type === 'number'
-			? initialValue
-			: null;
-		single = typeof initialValue === 'string' ? initialValue : null;
-		noneSelected = initialValue === 'none';
-		multi = Array.isArray(initialValue) ? [...initialValue] : [];
+		text =
+			node.kind === 'question' && node.type === 'text' && typeof initialValue === 'string'
+				? initialValue
+				: '';
+		num =
+			typeof initialValue === 'number' && node.kind === 'question' && node.type === 'number'
+				? initialValue
+				: null;
+		single =
+			node.kind === 'question' &&
+			node.type === 'single' &&
+			typeof initialValue === 'string'
+				? initialValue
+				: null;
+		noneSelected =
+			node.kind === 'question' && node.type === 'multi' && initialValue === 'none';
+		multi =
+			node.kind === 'question' && node.type === 'multi' && Array.isArray(initialValue)
+				? [...initialValue]
+				: [];
 		if (node.kind === 'question' && node.type === 'slider') {
 			slider =
 				typeof initialValue === 'number' ? initialValue : (node.range?.min ?? 0);
 		}
 	});
+
+	function markTouchHandled(e: PointerEvent) {
+		suppressClick = true;
+		clearTimeout(suppressClickTimer);
+		suppressClickTimer = setTimeout(() => {
+			suppressClick = false;
+		}, 400);
+		e.preventDefault();
+	}
+
+	function handleOptionPointerUp(action: () => void, e: PointerEvent) {
+		if (busy) return;
+		if (e.pointerType !== 'touch') return;
+		markTouchHandled(e);
+		action();
+	}
+
+	function handleOptionClick(action: () => void) {
+		if (busy || suppressClick) return;
+		action();
+	}
 
 	function currentValue(): AnswerValue | undefined {
 		if (node.kind === 'break') return undefined;
@@ -103,6 +144,8 @@
 				? multiComplete
 				: !required || answered)
 	);
+	// Matches MIN_ADVANCE_MS in the form runner page.
+	const CONTINUE_PROGRESS_MS = 300;
 	// Auto-advance single-choice questions submit on tap, so the Continue button is
 	// shown for visual consistency but stays disabled (it only reflects loading state).
 	let isAutoAdvance = $derived(
@@ -239,7 +282,8 @@
 							class="option"
 							class:selected={single === opt.id}
 							disabled={busy}
-							onclick={() => chooseSingle(opt.id)}
+							onpointerup={(e) => handleOptionPointerUp(() => chooseSingle(opt.id), e)}
+							onclick={() => handleOptionClick(() => chooseSingle(opt.id))}
 						>
 							{opt.label}
 						</button>
@@ -259,7 +303,8 @@
 							class:selected
 							class:dimmed={atLimit || noneSelected}
 							disabled={busy || atLimit || noneSelected}
-							onclick={() => toggleMulti(opt.id)}
+							onpointerup={(e) => handleOptionPointerUp(() => toggleMulti(opt.id), e)}
+							onclick={() => handleOptionClick(() => toggleMulti(opt.id))}
 						>
 							<span class="check" class:on={selected}></span>
 							{opt.label}
@@ -271,7 +316,8 @@
 							class="option"
 							class:selected={noneSelected}
 							disabled={busy}
-							onclick={toggleNone}
+							onpointerup={(e) => handleOptionPointerUp(toggleNone, e)}
+							onclick={() => handleOptionClick(toggleNone)}
 						>
 							<span class="check" class:on={noneSelected}></span>
 							Nenhuma das anteriores
@@ -311,17 +357,20 @@
 		>
 			<button
 				type="button"
-				class="btn"
+				class="btn continue-btn"
+				class:loading={busy}
+				style={`--continue-progress-ms: ${CONTINUE_PROGRESS_MS}ms`}
 				onclick={submit}
 				disabled={isAutoAdvance || !canContinue}
 				aria-describedby={needsRequiredHint ? 'required-continue-hint' : undefined}
+				aria-busy={busy}
 			>
 				{#if busy}
-					<span class="spinner" aria-hidden="true"></span>
+					<span class="continue-muted" aria-hidden="true"></span>
+					<span class="continue-fill" aria-hidden="true"></span>
 					<span class="visually-hidden">A carregar…</span>
-				{:else}
-					Continuar
 				{/if}
+				<span class="continue-label">Continuar</span>
 			</button>
 			{#if needsRequiredHint}
 				<span
@@ -347,6 +396,22 @@
 	.q {
 		display: flex;
 		flex-direction: column;
+		animation: q-enter 250ms ease-out;
+	}
+
+	@keyframes q-enter {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.q {
+			animation: none;
+		}
 	}
 
 	/*
@@ -481,6 +546,52 @@
 	.continue-wrap[data-required-hint] .btn:disabled {
 		pointer-events: none;
 	}
+	.continue-btn {
+		position: relative;
+		overflow: hidden;
+		isolation: isolate;
+	}
+	.continue-btn.loading:disabled {
+		opacity: 1;
+		cursor: wait;
+		background: transparent;
+	}
+	.continue-muted,
+	.continue-fill {
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		pointer-events: none;
+	}
+	.continue-muted {
+		background: var(--primary);
+		opacity: 0.55;
+		z-index: 0;
+	}
+	.continue-fill {
+		background: var(--primary);
+		transform: scaleX(0);
+		transform-origin: left center;
+		z-index: 1;
+	}
+	.continue-btn.loading .continue-fill {
+		animation: continue-progress var(--continue-progress-ms, 300ms) linear forwards;
+	}
+	.continue-label {
+		position: relative;
+		z-index: 2;
+	}
+	@keyframes continue-progress {
+		to {
+			transform: scaleX(1);
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.continue-btn.loading .continue-fill {
+			animation: none;
+			transform: scaleX(1);
+		}
+	}
 	.required-tooltip {
 		position: absolute;
 		right: 0;
@@ -519,24 +630,6 @@
 	}
 	.hint.error {
 		color: var(--danger);
-	}
-	.spinner {
-		width: 1.15rem;
-		height: 1.15rem;
-		border: 2px solid currentColor;
-		border-top-color: transparent;
-		border-radius: 50%;
-		animation: spin 0.6s linear infinite;
-	}
-	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
-	}
-	@media (prefers-reduced-motion: reduce) {
-		.spinner {
-			animation-duration: 1.5s;
-		}
 	}
 	.visually-hidden {
 		position: absolute;
