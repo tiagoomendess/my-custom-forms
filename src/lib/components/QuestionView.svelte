@@ -419,21 +419,24 @@
 	.q {
 		display: flex;
 		flex-direction: column;
-		animation: q-enter 250ms ease-out;
+	}
+
+	/*
+	 * Transform-only enter. Opacity-from-0 animations can stick at invisible on
+	 * first paint in mobile Safari / in-app WebViews (cold load looks blank until refresh).
+	 */
+	@media (prefers-reduced-motion: no-preference) {
+		.q {
+			animation: q-enter 250ms ease-out;
+		}
 	}
 
 	@keyframes q-enter {
 		from {
-			opacity: 0;
+			transform: translateY(6px);
 		}
 		to {
-			opacity: 1;
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.q {
-			animation: none;
+			transform: translateY(0);
 		}
 	}
 

@@ -187,13 +187,23 @@
 		z-index: 10;
 	}
 	.runner {
-		min-height: 100dvh;
+		/* svh avoids iOS first-paint dvh mis-measure that can push content off-screen */
+		min-height: 100svh;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		justify-content: center;
+		justify-content: flex-start;
 		padding: 1.5rem;
+		padding-top: max(1.5rem, 12vh);
 		gap: 1rem;
+	}
+
+	@media (min-width: 640px) {
+		.runner {
+			min-height: 100dvh;
+			justify-content: center;
+			padding-top: 1.5rem;
+		}
 	}
 	.sheet {
 		width: 100%;
