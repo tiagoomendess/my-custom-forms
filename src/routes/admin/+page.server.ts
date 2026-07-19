@@ -1,5 +1,5 @@
 import { redirect, type Actions } from '@sveltejs/kit';
-import { desc, eq, sql } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { getDb } from '$lib/server/db';
 import { forms, submissions } from '$lib/server/db/schema';
 import { getForm } from '$lib/server/forms';
@@ -14,7 +14,7 @@ export const load: PageServerLoad = async () => {
 			name: forms.name,
 			status: forms.status,
 			createdAt: forms.createdAt,
-			submissionCount: sql<number>`(select count(*) from ${submissions} where ${submissions.formId} = ${forms.id})`
+			submissionCount: db.$count(submissions, eq(submissions.formId, forms.id))
 		})
 		.from(forms)
 		.orderBy(desc(forms.createdAt));
